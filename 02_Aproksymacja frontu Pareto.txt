@@ -1,0 +1,48 @@
+% Zadanie 2: Aproksymacja frontu Pareto
+
+% Parametry
+pop_size = 50;
+num_generations = 50;
+dim = 2; % Liczba zmiennych decyzyjnych
+lb = [0, 0];
+ub = [5, 5];
+
+% Funkcje celu
+f1 = @(x) x(:, 1).^2;
+f2 = @(x) (x(:, 2) - 2).^2;
+
+% Inicjalizacja populacji
+population = lb + (ub - lb) .* rand(pop_size, dim);
+
+% Algorytm ewolucyjny
+for gen = 1:num_generations
+    % Ocena dopasowania
+    obj1 = f1(population);
+    obj2 = f2(population);
+    
+    % Współdzielenie dopasowania (proste skalowanie)
+    fitness = 1 ./ (obj1 + obj2 + 1e-6);
+    
+    % Selekcja
+    [~, idx] = sort(fitness, 'descend');
+    parents = population(idx(1:ceil(pop_size/2)), :);
+    
+    % Krzyżowanie i mutacja
+    offspring = [];
+    for i = 1:2:size(parents, 1)-1
+        p1 = parents(i, :);
+        p2 = parents(i+1, :);
+        child = 0.5 * (p1 + p2) + randn(1, dim) * 0.1;
+        offspring = [offspring; child]; %#ok<AGROW>
+    end
+    % Aktualizacja populacji
+    population = [parents; offspring];
+    population = min(max(population, lb), ub); % Ograniczenie do zakresu
+end
+
+% Wizualizacja frontu Pareto
+figure;
+scatter(f1(population), f2(population), 'filled');
+xlabel('f_1(x)');
+ylabel('f_2(x)');
+title('Przybliżony front Pareto');

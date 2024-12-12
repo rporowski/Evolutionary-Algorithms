@@ -1,0 +1,56 @@
+% Zadanie 4: Optymalizacja dynamiczna z funkcją zmieniającą się w czasie
+
+% Parametry
+pop_size = 50; % Liczność populacji
+num_generations = 100; % Liczba pokoleń
+dim = 10; % Liczba wymiarów
+lb = -5.12; % Dolne ograniczenie
+ub = 5.12; % Górne ograniczenie
+alpha = 5; % Amplituda zmienności
+omega = 0.1; % Częstotliwość zmienności
+
+% Funkcja celu (Rastrigina)
+rastrigin = @(x) 10 * dim + sum(x.^2 - 10 * cos(2 * pi * x), 2);
+
+% Inicjalizacja populacji
+population = lb + (ub - lb) .* rand(pop_size, dim);
+
+% Algorytm ewolucyjny
+best_fitness_over_time = zeros(1, num_generations); % Do przechowywania najlepszych wyników
+
+for gen = 1:num_generations
+    % Aktualizacja funkcji celu (dynamiczna zmienność)
+    time_factor = alpha * sin(omega * gen);
+    dynamic_rastrigin = @(x) rastrigin(x) + time_factor;
+
+    % Ocena dopasowania
+    fitness = dynamic_rastrigin(population);
+    
+    % Selekcja turniejowa
+    [~, idx] = sort(fitness);
+    parents = population(idx(1:ceil(pop_size/2)), :);
+
+    % Krzyżowanie i mutacja
+    offspring = [];
+    for i = 1:2:size(parents, 1)-1
+        p1 = parents(i, :);
+        p2 = parents(i+1, :);
+        child = 0.5 * (p1 + p2) + randn(1, dim) * 0.1; % Mutacja
+        offspring = [offspring; child]; %#ok<AGROW>
+    end
+    
+    % Aktualizacja populacji
+    population = [parents; offspring];
+    population = min(max(population, lb), ub); % Ograniczenie do zakresu
+
+    % Zapis najlepszej wartości dopasowania
+    best_fitness_over_time(gen) = min(fitness);
+end
+
+% Wizualizacja wyników
+figure;
+plot(1:num_generations, best_fitness_over_time, 'LineWidth', 2);
+xlabel('Pokolenie');
+ylabel('Najlepsze dopasowanie');
+title('Najlepsze dopasowanie w funkcji czasu (dynamiczna funkcja celu)');
+grid on;

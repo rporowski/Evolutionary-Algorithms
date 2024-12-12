@@ -1,0 +1,43 @@
+% Zadanie 3: Model dyfuzyjny
+
+% Parametry
+grid_size = 5; % Siatka 5x5
+pop_size = grid_size^2;
+num_generations = 50;
+dim = 10;
+lb = -5;
+ub = 5;
+
+% Funkcja celu (Rosenbrocka)
+rosenbrock = @(x) sum(100 * (x(:, 2:end) - x(:, 1:end-1).^2).^2 + (x(:, 1:end-1) - 1).^2, 2);
+
+% Inicjalizacja populacji
+population = lb + (ub - lb) * rand(pop_size, dim);
+
+% Algorytm ewolucyjny
+for gen = 1:num_generations
+    new_population = population;
+    for i = 1:pop_size
+        % Znalezienie sąsiadów
+        neighbors = [];
+        if mod(i-1, grid_size) > 0, neighbors = [neighbors; population(i-1, :)]; end
+        if mod(i, grid_size) > 0, neighbors = [neighbors; population(i+1, :)]; end
+        if i - grid_size > 0, neighbors = [neighbors; population(i-grid_size, :)]; end
+        if i + grid_size <= pop_size, neighbors = [neighbors; population(i+grid_size, :)]; end
+        
+        % Selekcja i krzyżowanie
+        if ~isempty(neighbors)
+            [~, idx] = min(rosenbrock(neighbors));
+            parent = neighbors(idx, :);
+            child = 0.5 * (population(i, :) + parent) + randn(1, dim) * 0.1;
+            new_population(i, :) = child;
+        end
+    end
+    % Aktualizacja populacji
+    population = min(max(new_population, lb), ub);
+end
+
+% Wyniki
+fitness = rosenbrock(population);
+disp('Najlepsze dopasowanie:');
+disp(min(fitness));

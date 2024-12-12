@@ -1,0 +1,59 @@
+% Zadanie 1: Model wyspowy z funkcją Rastrigina
+
+% Parametry
+num_islands = 5; % Liczba wysp
+pop_size = 20; % Rozmiar populacji na wyspie
+num_generations = 50; % Liczba pokoleń
+migration_interval = 10; % Częstotliwość migracji
+num_migrants = 2; % Liczba migrujących osobników
+dim = 10; % Liczba wymiarów
+lb = -5.12; % Dolne ograniczenie
+ub = 5.12; % Górne ograniczenie
+
+% Funkcja celu (Rastrigina)
+rastrigin = @(x) 10 * dim + sum(x.^2 - 10 * cos(2 * pi * x), 2);
+
+% Inicjalizacja wysp
+islands = cell(1, num_islands);
+for i = 1:num_islands
+    islands{i} = lb + (ub - lb) * rand(pop_size, dim); % Losowe osobniki
+end
+
+% Algorytm ewolucyjny
+for gen = 1:num_generations
+    for i = 1:num_islands
+        % Ocena dopasowania
+        fitness = rastrigin(islands{i});
+        % Selekcja turniejowa
+        [~, idx] = sort(fitness);
+        parents = islands{i}(idx(1:ceil(pop_size/2)), :);
+        % Krzyżowanie
+        offspring = [];
+        for j = 1:2:size(parents, 1)-1
+            p1 = parents(j, :);
+            p2 = parents(j+1, :);
+            child = 0.5 * (p1 + p2) + randn(1, dim) * 0.1; % Mutacja
+            offspring = [offspring; child]; %#ok<AGROW>
+        end
+        % Aktualizacja populacji
+        islands{i} = [parents; offspring];
+    end
+
+    % Migracja
+    if mod(gen, migration_interval) == 0
+        for i = 1:num_islands
+            next_island = mod(i, num_islands) + 1;
+            migrants = islands{i}(1:num_migrants, :);
+            islands{next_island}(end-num_migrants+1:end, :) = migrants;
+        end
+    end
+end
+
+% Zbiór wyników
+results = [];
+for i = 1:num_islands
+    fitness = rastrigin(islands{i});
+    results = [results; min(fitness)]; %#ok<AGROW>
+end
+disp('Najlepsze dopasowanie na każdej wyspie:');
+disp(results);
