@@ -1,0 +1,47 @@
+import numpy as np
+import random
+
+def rosenbrock(x):
+    return sum(100 * (x[i+1] - x[i]**2)**2 + (1 - x[i])**2 for i in range(len(x) - 1))
+
+def generate_population(size, dimensions, bounds):
+    return [np.random.uniform(bounds[0], bounds[1], dimensions).tolist() for _ in range(size)]
+
+def mutate(individual, bounds):
+    idx = random.randint(0, len(individual) - 1)
+    individual[idx] += random.uniform(-0.1, 0.1)
+    individual[idx] = np.clip(individual[idx], bounds[0], bounds[1])
+
+def local_optimization(individual):
+    for i in range(len(individual)):
+        individual[i] += random.uniform(-0.01, 0.01)
+    return individual
+
+def diversity(population):
+    distances = [np.linalg.norm(np.array(p1) - np.array(p2)) for i, p1 in enumerate(population) for j, p2 in enumerate(population) if i < j]
+    return np.mean(distances)
+
+# Main
+population_size = 20
+dimensions = 2
+bounds = (-2, 2)
+generations = 50
+
+population = generate_population(population_size, dimensions, bounds)
+diversity_values = []
+
+for gen in range(generations):
+    population = sorted(population, key=lambda ind: rosenbrock(ind))
+    if gen % 5 == 0:
+        population[:5] = [local_optimization(ind) for ind in population[:5]]
+    diversity_values.append(diversity(population))
+    for ind in population:
+        mutate(ind, bounds)
+
+# Visualization
+import matplotlib.pyplot as plt
+plt.plot(diversity_values)
+plt.xlabel("Generation")
+plt.ylabel("Diversity")
+plt.title("Diversity in Population Over Generations")
+plt.show()

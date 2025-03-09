@@ -1,0 +1,54 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def rastrigin(x):
+    A = 10
+    return A * len(x) + sum((xi ** 2 - A * np.cos(2 * np.pi * xi)) for xi in x)
+
+def random_neighbor(x, step_size=0.5):
+    return [xi + np.random.uniform(-step_size, step_size) for xi in x]
+
+def greedy_acceptance(current, neighbor):
+    return neighbor if rastrigin(neighbor) < rastrigin(current) else current
+
+def probabilistic_acceptance(current, neighbor, temperature):
+    delta = rastrigin(neighbor) - rastrigin(current)
+    if delta < 0:
+        return neighbor
+    else:
+        return neighbor if np.random.rand() < np.exp(-delta / temperature) else current
+
+def dynamic_threshold_acceptance(current, neighbor, epsilon):
+    return neighbor if rastrigin(neighbor) < rastrigin(current) + epsilon else current
+
+def optimize_with_criterion(start, iterations, criterion, **kwargs):
+    x = start
+    trajectory = [x]
+    for i in range(iterations):
+        neighbor = random_neighbor(x)
+        x = criterion(x, neighbor, **kwargs)
+        trajectory.append(x)
+    return trajectory
+
+# Main
+start_point = [5.0, 5.0]
+iterations = 200
+temperature = 10
+epsilon = 1.0
+
+results = {
+    "Greedy": optimize_with_criterion(start_point, iterations, greedy_acceptance),
+    "Probabilistic": optimize_with_criterion(start_point, iterations, probabilistic_acceptance, temperature=temperature),
+    "Dynamic Threshold": optimize_with_criterion(start_point, iterations, dynamic_threshold_acceptance, epsilon=epsilon)
+}
+
+# Visualization
+plt.figure(figsize=(10, 6))
+for method, traj in results.items():
+    values = [rastrigin(x) for x in traj]
+    plt.plot(values, label=method)
+plt.xlabel("Iteration")
+plt.ylabel("Function Value")
+plt.legend()
+plt.title("Comparison of Acceptance Criteria")
+plt.show()

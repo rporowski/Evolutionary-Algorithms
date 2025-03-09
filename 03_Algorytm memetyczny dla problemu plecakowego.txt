@@ -1,0 +1,54 @@
+import random
+
+def generate_items(n, max_weight=10, max_value=100):
+    return [(random.randint(1, max_weight), random.randint(1, max_value)) for _ in range(n)]
+
+def fitness(individual, items, capacity):
+    weight = sum(ind * items[i][0] for i, ind in enumerate(individual))
+    value = sum(ind * items[i][1] for i, ind in enumerate(individual))
+    return value if weight <= capacity else 0
+
+def mutate(individual):
+    idx = random.randint(0, len(individual) - 1)
+    individual[idx] = 1 - individual[idx]
+
+def crossover(parent1, parent2):
+    point = random.randint(1, len(parent1) - 1)
+    return parent1[:point] + parent2[point:], parent2[:point] + parent1[point:]
+
+def local_optimization(individual, items, capacity):
+    for i in range(len(individual)):
+        if individual[i] == 0:
+            individual[i] = 1
+            if fitness(individual, items, capacity) == 0:
+                individual[i] = 0
+    return individual
+
+# Main
+n_items = 10
+capacity = 50
+population_size = 20
+generations = 50
+mutation_rate = 0.1
+
+items = generate_items(n_items)
+population = [[random.randint(0, 1) for _ in range(n_items)] for _ in range(population_size)]
+
+for gen in range(generations):
+    population = sorted(population, key=lambda ind: fitness(ind, items, capacity), reverse=True)
+    next_population = population[:2]  # Elitism
+    while len(next_population) < population_size:
+        parent1, parent2 = random.choices(population[:10], k=2)
+        offspring1, offspring2 = crossover(parent1, parent2)
+        if random.random() < mutation_rate:
+            mutate(offspring1)
+        if random.random() < mutation_rate:
+            mutate(offspring2)
+        next_population.append(offspring1)
+        next_population.append(offspring2)
+    population = next_population
+    population = [local_optimization(ind, items, capacity) for ind in population]
+
+best_solution = max(population, key=lambda ind: fitness(ind, items, capacity))
+print("Best Solution:", best_solution)
+print("Best Fitness:", fitness(best_solution, items, capacity))
