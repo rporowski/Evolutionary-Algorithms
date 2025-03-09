@@ -1,0 +1,43 @@
+% Zadanie 2: Wpływ liczności populacji
+
+% Parametry
+pop_sizes = [20, 50, 100];
+num_generations = 100;
+dim = 10;
+lb = -5;
+ub = 5;
+
+% Funkcja celu (Rosenbrocka)
+rosenbrock = @(x) sum(100 * (x(:, 2:end) - x(:, 1:end-1).^2).^2 + (x(:, 1:end-1) - 1).^2, 2);
+
+% Eksperyment
+results = zeros(numel(pop_sizes), num_generations);
+for p = 1:numel(pop_sizes)
+    pop_size = pop_sizes(p);
+    population = lb + (ub - lb) .* rand(pop_size, dim);
+    best_fit = zeros(1, num_generations);
+
+    for gen = 1:num_generations
+        fitness = rosenbrock(population);
+        [~, idx] = sort(fitness);
+        parents = population(idx(1:ceil(pop_size/2)), :);
+        offspring = 0.5 * parents + randn(size(parents)) * 0.1;
+        population = [parents; offspring];
+        population = min(max(population, lb), ub);
+        best_fit(gen) = min(fitness);
+    end
+
+    results(p, :) = best_fit;
+end
+
+% Wizualizacja
+figure;
+for p = 1:numel(pop_sizes)
+    plot(1:num_generations, results(p, :), 'DisplayName', sprintf('Populacja: %d', pop_sizes(p)));
+    hold on;
+end
+legend('Location', 'northeast');
+xlabel('Pokolenia');
+ylabel('Najlepsze dopasowanie');
+title('Wpływ liczności populacji');
+grid on;

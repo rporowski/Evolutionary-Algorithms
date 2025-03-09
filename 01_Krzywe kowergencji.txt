@@ -1,0 +1,43 @@
+% Zadanie 1: Krzywe konwergencji
+
+% Parametry
+pop_size = 50;
+num_generations = 100;
+dim = 10;
+lb = -5.12;
+ub = 5.12;
+
+% Funkcje celu
+sphere = @(x) sum(x.^2, 2);
+rastrigin = @(x) 10 * dim + sum(x.^2 - 10 * cos(2 * pi * x), 2);
+
+% Algorytm ewolucyjny
+functions = {sphere, rastrigin};
+names = {'Funkcja sferyczna', 'Funkcja Rastrigina'};
+results = zeros(num_generations, numel(functions));
+
+for f = 1:numel(functions)
+    population = lb + (ub - lb) .* rand(pop_size, dim);
+    best_fit = zeros(1, num_generations);
+
+    for gen = 1:num_generations
+        fitness = functions{f}(population);
+        [~, idx] = sort(fitness);
+        parents = population(idx(1:ceil(pop_size/2)), :);
+        offspring = 0.5 * parents + randn(size(parents)) * 0.1;
+        population = [parents; offspring];
+        population = min(max(population, lb), ub);
+        best_fit(gen) = min(fitness);
+    end
+
+    results(:, f) = best_fit;
+end
+
+% Wizualizacja
+figure;
+plot(1:num_generations, results, 'LineWidth', 2);
+legend(names, 'Location', 'northeast');
+xlabel('Pokolenia');
+ylabel('Najlepsze dopasowanie');
+title('Krzywe konwergencji');
+grid on;

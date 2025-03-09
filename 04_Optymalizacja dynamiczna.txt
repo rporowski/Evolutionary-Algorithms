@@ -1,0 +1,43 @@
+% Zadanie 4: Optymalizacja dynamiczna z funkcją celu zmieniającą się w czasie
+
+% Parametry
+pop_size = 50;
+num_generations = 100;
+dim = 10;
+lb = -5.12;
+ub = 5.12;
+alpha = 5; % Amplituda zmienności
+omega = 0.1; % Częstotliwość zmienności
+
+% Funkcja celu (Rastrigina)
+rastrigin = @(x) 10 * dim + sum(x.^2 - 10 * cos(2 * pi * x), 2);
+
+% Inicjalizacja populacji
+population = lb + (ub - lb) .* rand(pop_size, dim);
+best_fitness_over_time = zeros(1, num_generations);
+
+% Algorytm ewolucyjny
+for gen = 1:num_generations
+    % Aktualizacja funkcji celu (dynamiczna zmienność)
+    time_factor = alpha * sin(omega * gen);
+    dynamic_rastrigin = @(x) rastrigin(x) + time_factor;
+
+    % Ocena dopasowania
+    fitness = dynamic_rastrigin(population);
+    [~, idx] = sort(fitness);
+    parents = population(idx(1:ceil(pop_size/2)), :);
+    offspring = 0.5 * parents + randn(size(parents)) * 0.1; % Mutacja
+    population = [parents; offspring];
+    population = min(max(population, lb), ub);
+
+    % Zapis najlepszego wyniku
+    best_fitness_over_time(gen) = min(fitness);
+end
+
+% Wizualizacja wyników
+figure;
+plot(1:num_generations, best_fitness_over_time, 'LineWidth', 2);
+xlabel('Pokolenie');
+ylabel('Najlepsze dopasowanie');
+title('Najlepsze dopasowanie w funkcji czasu (dynamiczna funkcja celu)');
+grid on;

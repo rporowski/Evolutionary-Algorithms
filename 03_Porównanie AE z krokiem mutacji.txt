@@ -1,0 +1,59 @@
+% Zadanie 3: Porównanie AE z ustalonym krokiem mutacji i samoadaptacją
+
+% Parametry
+pop_size = 50;
+num_generations = 100;
+dim = 10;
+lb = -32.768;
+ub = 32.768;
+
+% Funkcja celu (Ackleya)
+ackley = @(x) -20*exp(-0.2*sqrt(sum(x.^2, 2)/dim)) - exp(sum(cos(2*pi*x), 2)/dim) + 20 + exp(1);
+
+% Algorytm ewolucyjny z ustalonym krokiem mutacji
+fixed_mutation_results = zeros(1, num_generations);
+population_fixed = lb + (ub - lb) .* rand(pop_size, dim);
+
+for gen = 1:num_generations
+    fitness = ackley(population_fixed);
+    [~, idx] = sort(fitness);
+    parents = population_fixed(idx(1:ceil(pop_size/2)), :);
+    offspring = 0.5 * parents + randn(size(parents)) * 0.1; % Stały krok mutacji
+    population_fixed = [parents; offspring];
+    population_fixed = min(max(population_fixed, lb), ub);
+    fixed_mutation_results(gen) = min(fitness);
+end
+
+% Algorytm ewolucyjny z samoadaptacją kroku mutacji
+adaptive_mutation_results = zeros(1, num_generations);
+population_adaptive = lb + (ub - lb) .* rand(pop_size, dim);
+step_size = 0.1 * ones(pop_size, dim); % Inicjalizacja kroku mutacji
+
+for gen = 1:num_generations
+    fitness = ackley(population_adaptive);
+    [~, idx] = sort(fitness);
+    parents = population_adaptive(idx(1:ceil(pop_size/2)), :);
+    step_size_parents = step_size(idx(1:ceil(pop_size/2)), :);
+    offspring = 0.5 * parents + step_size_parents .* randn(size(parents)); % Mutacja
+    step_size_offspring = step_size_parents .* exp(randn(size(parents)) * 0.1); % Adaptacja kroku
+    population_adaptive = [parents; offspring];
+    step_size = [step_size_parents; step_size_offspring];
+    population_adaptive = min(max(population_adaptive, lb), ub);
+    adaptive_mutation_results(gen) = min(fitness);
+end
+
+% Porównanie wyników
+figure;
+plot(1:num_generations, fixed_mutation_results, 'r', 'LineWidth', 2);
+hold on;
+plot(1:num_generations, adaptive_mutation_results, 'b', 'LineWidth', 2);
+xlabel('Pokolenia');
+ylabel('Najlepsze dopasowanie');
+legend({'Stały krok mutacji', 'Samoadaptacja kroku mutacji'}, 'Location', 'northeast');
+title('Porównanie wariantów AE');
+grid on;
+
+% Test statystyczny
+disp('Wyniki końcowe:');
+disp(['Stały krok mutacji: ', num2str(fixed_mutation_results(end))]);
+disp(['Samoadaptacja kroku mutacji: ', num2str(adaptive_mutation_results(end))]);
